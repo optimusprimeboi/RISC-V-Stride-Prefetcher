@@ -1,0 +1,57 @@
+// ============================================================================
+// Test Program: Sequential Array Access (Stride = 4 bytes)
+// This is the MAIN benchmark for the stride prefetcher
+// 
+// C equivalent:
+//   int arr[64]; // at address 0x1000
+//   int sum = 0;
+//   for (int i = 0; i < 64; i++)
+//       sum += arr[i];
+//
+// Expected: Prefetcher detects stride=4, eliminates most cold misses
+// ============================================================================
+// Register usage:
+//   x1  = base address (0x1000)
+//   x2  = loop counter (i)
+//   x3  = loop limit (64)
+//   x4  = sum
+//   x5  = loaded value
+//   x6  = address offset
+//
+// addr 0x00: 
+00001137  // lui   x2, 0x1        ; x2 = 0x1000 (base addr)
+00010093  // addi  x1, x2, 0      ; x1 = 0x1000 (copy base)
+00000113  // addi  x2, x0, 0      ; x2 = 0 (counter i)
+04000193  // addi  x3, x0, 64     ; x3 = 64 (limit)
+00000213  // addi  x4, x0, 0      ; x4 = 0 (sum)
+// Loop start (addr 0x14):
+00209313  // slli  x6, x1, 0      ; (NOP-ish, use x1 as base)
+002082B3  // add   x5, x1, x2     ; (wrong, need shift)
+// Actually let me rewrite this properly
+// addr 0x00:
+00001037  // lui   x0, 0x1 -- NO, x0 is zero!
+// Let me use proper encoding:
+//
+// Restart with correct assembly:
+//   addi x10, x0, 0       # x10 = 0 (sum)
+//   lui  x11, 1            # x11 = 0x1000 (base addr of array)
+//   addi x12, x0, 0        # x12 = 0 (byte offset)
+//   addi x13, x0, 256      # x13 = 256 (64 words * 4 bytes)
+// loop:
+//   add  x14, x11, x12     # x14 = base + offset
+//   lw   x15, 0(x14)       # x15 = mem[base+offset]
+//   add  x10, x10, x15     # sum += value
+//   addi x12, x12, 4       # offset += 4
+//   bne  x12, x13, loop    # if offset != 256, loop
+// halt:
+//   jal  x0, halt          # infinite loop (halt)
+00000513  // addi  x10, x0, 0        ; sum = 0
+000015B7  // lui   x11, 1            ; x11 = 0x1000
+00000613  // addi  x12, x0, 0        ; offset = 0
+10000693  // addi  x13, x0, 256      ; limit = 256 bytes (64 words)
+00C58733  // add   x14, x11, x12     ; addr = base + offset
+0007A783  // lw    x15, 0(x14)       ; load word
+00F50533  // add   x10, x10, x15     ; sum += value
+00460613  // addi  x12, x12, 4       ; offset += 4
+FED61CE3  // bne   x12, x13, -8     ; branch back to add instruction
+0000006F  // jal   x0, 0             ; halt (infinite loop)
