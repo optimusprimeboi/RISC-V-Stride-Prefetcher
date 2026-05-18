@@ -4,7 +4,7 @@
 [![FPGA](https://img.shields.io/badge/FPGA-Zybo%20Z7--10-green)](https://digilent.com/reference/programmable-logic/zybo-z7/start)
 [![ISA](https://img.shields.io/badge/ISA-RISC--V%20RV32I-orange)](https://riscv.org/)
 [![Vivado](https://img.shields.io/badge/Tool-Vivado%202025.2-purple)](https://www.xilinx.com/products/design-tools/vivado.html)
-[![Status](https://img.shields.io/badge/Status-Hardware%20Verified-brightgreen)](https://github.com)
+[![Status](https://img.shields.io/badge/Status-Hardware%20Verified-brightgreen)](https://github.com/sarthakkharwar/RISC-V-Stride-Prefetcher)
 
 > A fully synthesizable **Chen-Baer stride-based hardware data prefetcher** integrated into a 5-stage pipelined RV32I RISC-V processor. Physically verified on the **Digilent Zybo Z7-10 FPGA** using Vivado ILA, achieving a **2.71x execution speedup** and **99.4% cache hit rate** on sequential workloads.
 
@@ -47,6 +47,33 @@ The system consists of four major hardware blocks sharing a single memory bus:
 | **L1 Data Cache** | 256-byte, direct-mapped, write-through, 4-word cache lines, zero-cycle hit path |
 | **Stride Prefetcher** | 8-entry direct-mapped RPT using PC bits [4:2], Chen-Baer 3-state confidence FSM |
 | **Memory Arbiter** | Strict-priority arbiter — CPU demand requests always preempt speculative prefetches |
+
+### Block Diagram
+
+```
+                    ┌──────────────────┐
+                    │   RV32I 5-Stage  │
+                    │   Pipeline Core  │
+                    └───────┬──────────┘
+                            │ Load/Store
+                    ┌───────▼──────────┐
+                    │  L1 Data Cache   │
+                    │  (256B, DM, WT)  │
+                    └──┬───────────┬───┘
+                       │           │ Miss / RPT event
+                       │    ┌──────▼──────────┐
+                       │    │ Stride Prefetcher│
+                       │    │  (8-entry RPT)   │
+                       │    └──────┬───────────┘
+                    ┌──▼───────────▼───┐
+                    │  Memory Arbiter  │
+                    │  (CPU Priority)  │
+                    └────────┬─────────┘
+                    ┌────────▼─────────┐
+                    │   Main Memory    │
+                    │  (10-cycle DRAM) │
+                    └──────────────────┘
+```
 
 ### Prefetcher State Machine (Chen-Baer RPT)
 
@@ -155,10 +182,13 @@ A Xilinx Integrated Logic Analyzer (ILA) core was instantiated to capture the fo
 | `evt_hit_w` | 1-bit | Pulses HIGH on every cache hit — confirms prefetched data is being consumed by the CPU |
 | `evt_pf_w` | 1-bit | Pulses HIGH on every issued prefetch — proves the RPT reached STEADY and is actively prefetching |
 
-### What Was Observed on Real Hardware
-- When **only `sw[0]` is ON** (Cache enabled, Prefetch OFF): `evt_hit_w` pulses sporadically on initial hits. `LED[2]` flickers occasionally.
-- When **both `sw[0]` and `sw[1]` are ON** (Cache + Prefetch): `evt_pf_w` begins pulsing regularly once the RPT learns the stride. `LED[2]` and `LED[3]` both flash rapidly, visually confirming that almost every CPU load request is now being satisfied by the prefetcher.
-- `dbg_pc` was observed incrementing in regular patterns matching the test program's loop structure.
+### Observed LED and Signal Behavior
+
+| Configuration | `LED[2]` (Hit) | `LED[3]` (Prefetch) | `dbg_pc` Pattern |
+|--------------|:--------------:|:-------------------:|:-----------------:|
+| Cache OFF, Prefetch OFF | Dark | Dark | Irregular (frequent stalls) |
+| Cache ON, Prefetch OFF | Occasional flicker | Dark | Mostly regular |
+| Cache ON, Prefetch ON | Rapid flashing | Rapid flashing | Very regular increments |
 
 ### ILA Trigger Configuration
 The ILA was configured to trigger on `evt_pf_w = 1`, capturing a snapshot window the exact moment the prefetcher first issues a speculative request. This proved that the hardware FSM transitions to STEADY state and begins prefetching, mirroring the behavioral simulation results.
@@ -242,6 +272,18 @@ cd RISC-V-Stride-Prefetcher
 4. Run Synthesis → Implementation → Generate Bitstream.
 5. Program the Zybo Z7-10 via Vivado Hardware Manager.
 6. Use `sw[0]` to enable Cache and `sw[1]` to enable Prefetcher. Watch `LED[2]` and `LED[3]` for hit and prefetch activity.
+
+### Configurable Parameters
+
+You can modify these parameters in the RTL to experiment with different configurations:
+
+| Parameter | File | Default | Description |
+|-----------|------|:-------:|-------------|
+| `RPT_SIZE` | `stride_prefetcher.v` | 8 entries | Number of RPT entries (indexed by PC bits) |
+| `CACHE_LINES` | `l1_data_cache.v` | 16 lines (256B) | Number of cache lines (4 words each) |
+| `MEM_LATENCY` | `fpga_top.v` | 10 cycles | Simulated DRAM access latency |
+| `IMEM_DEPTH` | `fpga_top.v` | 1024 words | Instruction memory depth |
+| `DMEM_DEPTH` | `fpga_top.v` | 4096 words | Data memory depth |
 
 ---
 
