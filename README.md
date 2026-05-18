@@ -8,6 +8,8 @@
 
 > A fully synthesizable **Chen-Baer stride-based hardware data prefetcher** integrated into a 5-stage pipelined RV32I RISC-V processor. Physically verified on the **Digilent Zybo Z7-10 FPGA** using Vivado ILA, achieving a **2.71x execution speedup** and **99.4% cache hit rate** on sequential workloads.
 
+📊 **Quick Stats:** `2.71× speedup` | `99.4% stall reduction` | `97.6% cold-start miss elimination` | `76.18 MHz Fmax` | `Timing Met ✅`
+
 ---
 
 ## 📋 Table of Contents
@@ -70,9 +72,11 @@ The following are the primary I/O signals of the top-level `riscv_top` module th
 | `evt_hit` | Out | 1-bit | Pulses HIGH on every L1 cache hit |
 | `evt_pf_issued` | Out | 1-bit | Pulses HIGH every time the prefetcher issues a request |
 | `cnt_cycles[31:0]` | Out | 32-bit | Total elapsed clock cycles |
+| `cnt_instrs[31:0]` | Out | 32-bit | Total retired instructions |
 | `cnt_stall_cycles[31:0]` | Out | 32-bit | Total cycles the CPU spent stalled |
 | `cnt_cache_hits[31:0]` | Out | 32-bit | Cumulative cache hit counter |
 | `cnt_cache_misses[31:0]` | Out | 32-bit | Cumulative cache miss counter |
+| `cnt_pf_hits[31:0]` | Out | 32-bit | Prefetch hits (prefetched lines actually used by CPU) |
 | `cnt_pf_issued[31:0]` | Out | 32-bit | Total prefetch requests issued |
 | `cnt_pf_pollution[31:0]` | Out | 32-bit | Prefetch pollution events (useful-but-evicted lines) |
 
