@@ -1,0 +1,28 @@
+# Vivado generated files
+*.bit
+*.xsa
+*.xpr
+*.xpr.bak
+.Xil/
+.ip_user_files/
+.gen/
+*.jou
+*.log
+*.cache/
+*.hw/
+*.runs/
+*.sim/
+*.srcs/
+*.bak
+*.str
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
