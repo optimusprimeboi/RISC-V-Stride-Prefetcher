@@ -56,6 +56,26 @@ Each entry in the Reference Prediction Table tracks a load instruction through t
 
 If the stride changes while in STEADY, the state demotes back to TRANSIENT, preventing stale predictions.
 
+### Key Signal Interface
+
+The following are the primary I/O signals of the top-level `riscv_top` module that connect the CPU, Cache, and Prefetcher:
+
+| Signal | Dir | Width | Description |
+|--------|-----|-------|-------------|
+| `clk` | In | 1-bit | System clock (62.5 MHz on FPGA) |
+| `rst_n` | In | 1-bit | Active-low asynchronous reset |
+| `cache_enable` | In | 1-bit | Enables the L1 Data Cache (mapped to `sw[0]`) |
+| `prefetch_enable` | In | 1-bit | Enables the Stride Prefetcher (mapped to `sw[1]`) |
+| `dbg_pc[31:0]` | Out | 32-bit | Current Program Counter for ILA probing |
+| `evt_hit` | Out | 1-bit | Pulses HIGH on every L1 cache hit |
+| `evt_pf_issued` | Out | 1-bit | Pulses HIGH every time the prefetcher issues a request |
+| `cnt_cycles[31:0]` | Out | 32-bit | Total elapsed clock cycles |
+| `cnt_stall_cycles[31:0]` | Out | 32-bit | Total cycles the CPU spent stalled |
+| `cnt_cache_hits[31:0]` | Out | 32-bit | Cumulative cache hit counter |
+| `cnt_cache_misses[31:0]` | Out | 32-bit | Cumulative cache miss counter |
+| `cnt_pf_issued[31:0]` | Out | 32-bit | Total prefetch requests issued |
+| `cnt_pf_pollution[31:0]` | Out | 32-bit | Prefetch pollution events (useful-but-evicted lines) |
+
 ---
 
 ## Key Features
@@ -183,6 +203,21 @@ The ILA was configured to trigger on `evt_pf_w = 1`, capturing a snapshot window
 
 ---
 
+## ⚡ Quick Start
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/sarthakkharwar/RISC-V-Stride-Prefetcher.git
+cd RISC-V-Stride-Prefetcher
+
+# 2. Open Vivado and create a project targeting xc7z010clg400-1
+# 3. Add all .v files from Synthesized_Project_Codes/rtl/ as sources
+# 4. Add tb_riscv_top.v as simulation source
+# 5. Run Behavioral Simulation — watch the Tcl console for performance stats!
+```
+
+---
+
 ## How to Build and Simulate
 
 ### Prerequisites
@@ -223,6 +258,18 @@ Target: **Xilinx Zybo Z7-10 (XC7Z010-1CLG400C)**
 *\*LUT count includes the overhead of the Xilinx ILA debugging core used for hardware verification.*
 
 > All timing constraints are met. Zero failing endpoints across Setup, Hold, and Pulse Width checks.
+
+---
+
+## ⚠️ Known Limitations and Future Work
+
+| Limitation | Impact | Suggested Fix |
+|-----------|--------|---------------|
+| **RPT Aliasing** | Two different load PCs may hash to the same RPT entry (only 8 entries, indexed by PC[4:2]) causing incorrect stride predictions | Increase RPT to 16–32 entries or use a tagged RPT |
+| **Cache Pollution on Random Accesses** | Prefetching wrong lines evicts valid data in the tiny 256-byte cache during non-sequential loops | Add a confidence threshold — only prefetch after 2 confirmed STEADY hits |
+| **Single-Port Memory Bus** | Cache and Prefetcher share one memory bus; prefetch latency is non-zero even in STEADY state | Add a dedicated prefetch port or a small prefetch buffer/queue |
+| **Fixed Prefetch Distance** | Always prefetches `2 × stride` ahead; may over-fetch for slow loops | Make prefetch distance adaptive based on measured hit rate |
+| **No Branch Prediction** | Branch mispredictions flush the pipeline, and currently fetched data may be invalidated | Integrate a simple 2-bit saturating branch predictor |
 
 ---
 
