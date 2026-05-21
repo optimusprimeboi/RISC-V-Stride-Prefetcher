@@ -328,4 +328,4 @@ Target: **Xilinx Zybo Z7-10 (XC7Z010-1CLG400C)**
 
 ---
 
-*Developed by **Sarthak Kharwar** (B24498) — Indian Institute of Technology Mandi | Course: VL-326 VLSI System Design*
+*Developed by **Sarthak Kharwar** (B24498) — Indian Institute of Technology Mandi*
