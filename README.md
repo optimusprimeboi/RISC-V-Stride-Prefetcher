@@ -199,7 +199,7 @@ The ILA was configured to trigger on `evt_pf_w = 1`, capturing a snapshot window
 
 ```
 ├── Report/
-│   └── b24498_COA_report.pdf          # IEEE-format technical paper
+│   └── Stride_Prefetcher_Technical_Report.pdf  # IEEE-format technical paper
 ├── Simulation_Results/
 │   ├── all_test_overview.png          # Macro view of all 3 test phases
 │   ├── test1.png                      # Baseline waveform (heavy stalls)
