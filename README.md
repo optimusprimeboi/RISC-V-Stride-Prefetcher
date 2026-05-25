@@ -4,7 +4,7 @@
 [![FPGA](https://img.shields.io/badge/FPGA-Zybo%20Z7--10-green)](https://digilent.com/reference/programmable-logic/zybo-z7/start)
 [![ISA](https://img.shields.io/badge/ISA-RISC--V%20RV32I-orange)](https://riscv.org/)
 [![Vivado](https://img.shields.io/badge/Tool-Vivado%202025.2-purple)](https://www.xilinx.com/products/design-tools/vivado.html)
-[![Status](https://img.shields.io/badge/Status-Hardware%20Verified-brightgreen)](https://github.com/sarthakkharwar/RISC-V-Stride-Prefetcher)
+[![Status](https://img.shields.io/badge/Status-Hardware%20Verified-brightgreen)](https://github.com/optimusprimeboi/RISC-V-Stride-Prefetcher)
 
 > A fully synthesizable **Chen-Baer stride-based hardware data prefetcher** integrated into a 5-stage pipelined RV32I RISC-V processor. Physically verified on the **Digilent Zybo Z7-10 FPGA** using Vivado ILA, achieving a **2.71x execution speedup** and **99.4% cache hit rate** on sequential workloads.
 
@@ -241,7 +241,7 @@ The ILA was configured to trigger on `evt_pf_w = 1`, capturing a snapshot window
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/sarthakkharwar/RISC-V-Stride-Prefetcher.git
+git clone https://github.com/optimusprimeboi/RISC-V-Stride-Prefetcher.git
 cd RISC-V-Stride-Prefetcher
 
 # 2. Open Vivado and create a project targeting xc7z010clg400-1
@@ -328,4 +328,3 @@ Target: **Xilinx Zybo Z7-10 (XC7Z010-1CLG400C)**
 
 ---
 
-*Developed by **Sarthak Kharwar** (B24498) — Indian Institute of Technology Mandi*
